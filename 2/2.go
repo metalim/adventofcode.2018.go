@@ -26,6 +26,10 @@ func part1(ss []string) int {
 	return n2 * n3
 }
 
+/*
+
+// O(stringlen * n^2)
+
 func part2(ss []string) string {
 	for i, s1 := range ss {
 		for _, s2 := range ss[i+1:] {
@@ -50,6 +54,31 @@ func part2(ss []string) string {
 	}
 	return "???"
 }
+
+/*/
+
+// O(stringlen * n), inspired by https://github.com/petertseng
+
+type pair struct {
+	l, r string
+}
+
+func part2(ss []string) string {
+	seen := map[pair]bool{}
+	for _, s := range ss {
+		rs := []rune(s)
+		for i := 0; i < len(s); i++ {
+			p := pair{string(rs[:i]), string(rs[i+1:])}
+			if seen[p] {
+				return p.l + p.r
+			}
+			seen[p] = true
+		}
+	}
+	return "???"
+}
+
+//*/
 
 func main() {
 	for i, in := range ins {

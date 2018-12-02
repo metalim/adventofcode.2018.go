@@ -6,22 +6,22 @@ import (
 	"strings"
 )
 
-func f1(ss []string) int {
+func part1(ss []string) int {
 	n, _ := strconv.Atoi(ss[0])
 	return n
 }
 
-func f2(ss []string) int {
+func part2(ss []string) int {
 	n, _ := strconv.Atoi(ss[0])
 	return n
 }
 
 func main() {
 	for i, in := range ins {
-		fmt.Println("for", i)
+		fmt.Println("=== for", i, "===")
 		ss := strings.Fields(in)
-		fmt.Println("f1", f1(ss))
-		fmt.Println("f2", f2(ss))
+		fmt.Println("part 1:", part1(ss))
+		fmt.Println("part 2:", part2(ss))
 		fmt.Println()
 	}
 }
