@@ -59,18 +59,14 @@ func part2(ss []string) string {
 
 // O(stringlen * n), inspired by https://github.com/petertseng
 
-type pair struct {
-	l, r string
-}
-
 func part2(ss []string) string {
-	seen := map[pair]bool{}
+	seen := map[[2]string]bool{}
 	for _, s := range ss {
 		rs := []rune(s)
 		for i := 0; i < len(s); i++ {
-			p := pair{string(rs[:i]), string(rs[i+1:])}
+			p := [2]string{string(rs[:i]), string(rs[i+1:])}
 			if seen[p] {
-				return p.l + p.r
+				return p[0] + p[1]
 			}
 			seen[p] = true
 		}
