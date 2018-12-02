@@ -17,9 +17,15 @@ func f2(ss []string) int {
 }
 
 func main() {
-	ss := strings.Fields(in)
-	fmt.Println("f1", f1(ss))
-	fmt.Println("f2", f2(ss))
+	for i, in := range ins {
+		fmt.Println("for", i)
+		ss := strings.Fields(in)
+		fmt.Println("f1", f1(ss))
+		fmt.Println("f2", f2(ss))
+		fmt.Println()
+	}
 }
 
-var in = `1`
+var ins = map[string]string{
+	"github": `1`,
+	"google": `2`}
