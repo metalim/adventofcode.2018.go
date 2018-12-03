@@ -15,22 +15,26 @@ func sliceAtoi(in []string) []int {
 	return out
 }
 
-func part1(ss []string) (overlap int) {
-	r := regexp.MustCompile("#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)")
-	f := [1000][1000]int{}
+type field [1000][1000][]int
+
+func prepare(ss []string) (f field) {
+	r := regexp.MustCompile("\\d+")
 	for _, s := range ss {
-		m := r.FindStringSubmatch(s)[1:]
+		m := r.FindAllString(s, -1)
 		d := sliceAtoi(m)
 		for y := d[2]; y < d[2]+d[4]; y++ {
 			for x := d[1]; x < d[1]+d[3]; x++ {
-				f[y][x]++
+				f[y][x] = append(f[y][x], d[0])
 			}
 		}
 	}
+	return f
+}
 
+func part1(f field) (overlap int) {
 	for _, r := range f {
-		for _, v := range r {
-			if v > 1 {
+		for _, ids := range r {
+			if len(ids) > 1 {
 				overlap++
 			}
 		}
@@ -38,31 +42,18 @@ func part1(ss []string) (overlap int) {
 	return
 }
 
-func part2(ss []string) int {
-	r := regexp.MustCompile("#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)")
-	f := [1000][1000]int{}
+func part2(f field, maxID int) int {
 	overlap := map[int]bool{}
-	for _, s := range ss {
-		m := r.FindStringSubmatch(s)[1:]
-		d := sliceAtoi(m)
-		for y := d[2]; y < d[2]+d[4]; y++ {
-			for x := d[1]; x < d[1]+d[3]; x++ {
-				v := f[y][x]
-				switch {
-				case v == 0:
-					f[y][x] = d[0]
-				case v > 0:
-					f[y][x] = -1
-					overlap[v] = true
-					overlap[d[0]] = true
-				case v < 0:
-					overlap[d[0]] = true
+	for _, r := range f {
+		for _, ids := range r {
+			if len(ids) > 1 {
+				for _, id := range ids {
+					overlap[id] = true
 				}
 			}
 		}
 	}
-
-	for id := 1; id <= 1+len(ss); id++ {
+	for id := 1; id <= maxID; id++ {
 		if !overlap[id] {
 			return id
 		}
@@ -74,8 +65,9 @@ func main() {
 	for i, in := range ins {
 		fmt.Println("=== for", i, "===")
 		ss := strings.Split(in, "\n")
-		fmt.Println("part 1:", part1(ss))
-		fmt.Println("part 2:", part2(ss))
+		f := prepare(ss)
+		fmt.Println("part 1:", part1(f))
+		fmt.Println("part 2:", part2(f, len(ss)+1))
 		fmt.Println()
 	}
 }
