@@ -11,8 +11,8 @@ func _log(a ...interface{}) {
 	fmt.Println(a...)
 }
 
-// alternative
-func part1_alt(s string) int {
+// strings.Replace x2 x26
+func part1_replace(s string) int {
 	l := 0
 	for l != len(s) {
 		l = len(s)
@@ -25,7 +25,8 @@ func part1_alt(s string) int {
 	return l
 }
 
-func part1(s string) int {
+// rune unicode.ToLower
+func part1_toLower(s string) int {
 	sr := []rune(s)
 	l := 0
 	for l != len(sr) {
@@ -33,6 +34,38 @@ func part1(s string) int {
 		for i := 1; i < len(sr); i++ {
 			if sr[i] != sr[i-1] && unicode.ToLower(sr[i]) == unicode.ToLower(sr[i-1]) {
 				sr = append(sr[:i-1], sr[i+1:]...)
+			}
+		}
+	}
+	return l
+}
+
+// runes delta const
+func part1_runes_delta(s string) int {
+	sr := []rune(s)
+	D := 'a' - 'A'
+	l := 0
+	for l != len(sr) {
+		l = len(sr)
+		for i := 1; i < len(sr); i++ {
+			if sr[i] == sr[i-1]+D || sr[i]+D == sr[i-i] {
+				sr = append(sr[:i-1], sr[i+1:]...)
+			}
+		}
+	}
+	return l
+}
+
+// bytes delta const
+func part1(ss string) int {
+	D := byte('a' - 'A')
+	s := []byte(ss)
+	l := 0
+	for l != len(s) {
+		l = len(s)
+		for i := 1; i < len(s); i++ {
+			if s[i] == s[i-1]+D || s[i]+D == s[i-i] {
+				s = append(s[:i-1], s[i+1:]...)
 			}
 		}
 	}
