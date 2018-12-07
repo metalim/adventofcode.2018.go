@@ -43,6 +43,60 @@ Quirks found so far:
    (*guards[id])[i]++
    ```
 
+* ### There are not Sets
+
+  In Go there are not Set structures, but they are easy to emulate with maps:
+
+  ```go
+  type sset map[string]bool // "set" of strings
+
+  s := sset{}
+  s["foo"] = true
+  s["bar"] = true
+  // set of "foo" and "bar"
+
+  delete(s, "foo")
+  s["baz"] = true
+  // set of "bar" and "baz"
+
+  if s["bar"] {/* "bar" is in set */}
+
+  for w := range s {/* iterate set */}
+  ```
+
+  There is only one restriction: data types have to be comparable (`a==b`). So, no slices or maps allowed, but pointers to them are ok.
+
+* ### Structures are values as well
+
+  As with arrays, structs are values.
+
+  ```go
+  type ent struct {n int}
+  func inc(e ent){
+    e.n++
+  }
+
+  e := ent{0}
+  inc(e)
+  fmt.Println(e.n) // still 0
+  ```
+
+  This has to be taken into account, when you iterate:
+
+  ```go
+  s := []struct{n int}{/*...*/}
+
+  for _, e := range s {
+    e.n++ // woops, we're changing a copy
+  }
+
+  // proper way
+  for i := range s {
+    s[i].n++
+  }
+
+  ```
+
 ## Advent of Code specifics
 
 * One has to remember what Advent of Code is: tasks with quickly implemented solutions. Solution submissions in leaderboard take anywhere from 1 to tens of minutes after task unlock. With that in mind, you have to watch for clues in task description, that allow you to get away from general case solution, that would require significantly more time to implement.
