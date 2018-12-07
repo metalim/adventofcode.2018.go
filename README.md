@@ -17,7 +17,7 @@ Quirks found so far:
 
 * ### Arrays are **values**
 
-  And accessing a map returns copy of a stored value. Example from day 4:
+  And accessing a map returns copy of a mapped value. Example from day 4:
 
   ```go
   var guards map[int][60]int
@@ -66,9 +66,11 @@ Quirks found so far:
 
   There is only one restriction: data types have to be comparable (`a==b`). So, no slices or maps allowed, but pointers to them are ok.
 
-* ### Structures are values as well
+* ### Everything is passed by value
 
-  As with arrays, structs are values.
+  There is no pass-by-reference in Go. The only hardcoded exception are maps. Maps are literally pointers to hmap structure, and in early Go versions they were created as pointers (`var m *map[int]int`), that were missing dereference mechanics. For that reason, in later versions the `*` was removed from map syntax.
+
+  The rest, as with arrays, is passed by value.
 
   ```go
   type ent struct {n int}
