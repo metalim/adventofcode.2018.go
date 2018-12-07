@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func _log(a ...interface{}) {
@@ -14,7 +15,7 @@ type prep struct{}
 
 func prepare(ss []string) prep {
 	for _, s := range ss {
-		_log(s[0])
+		_log(s)
 	}
 	return prep{}
 }
@@ -33,9 +34,14 @@ func main() {
 	for i, in := range ins {
 		fmt.Println("=== for", i, "===")
 		ss := strings.Split(in, "\n")
+		t0 := time.Now()
 		p := prepare(ss)
 		fmt.Println("part 1:", part1(p))
+		t1 := time.Now()
+		fmt.Println(t1.Sub(t0))
 		fmt.Println("part 2:", part2(p))
+		t2 := time.Now()
+		fmt.Println(t2.Sub(t1))
 		fmt.Println()
 	}
 }
