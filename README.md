@@ -89,7 +89,7 @@ Quirks found so far:
   s := []struct{n int}{/*...*/}
 
   for _, e := range s {
-    e.n++ // woops, we're changing a copy
+    e.n++ // woops, we're changing a copy !
   }
 
   // proper way
@@ -98,6 +98,10 @@ Quirks found so far:
   }
 
   ```
+
+* ### Imports work with folders, not single files
+
+  For that reason you should not have several files in same folder, containing same function definition. For example, golint complains that I have `func main()` redefined, because I keep all Advent of Code files in single folder. While this is not acceptable in larger projects, Advent of Code solutions are just single files, so I decided to ignore this rule, instead of creating separate folder for each day. It works, and is more accessible.
 
 ## Advent of Code specifics
 
