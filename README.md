@@ -103,6 +103,31 @@ Quirks found so far:
 
   For that reason you should not have several files in same folder, containing same function definition. For example, golint complains that I have `func main()` redefined, because I keep all Advent of Code files in single folder. While this is not acceptable in larger projects, Advent of Code solutions are just single files, so I decided to ignore this rule, instead of creating separate folder for each day. It works, and is more accessible.
 
+* ### Type names and variable names do not conflict
+
+  While this is not reader-friendly, same name can mean type and variable:
+
+  ```go
+  type v [2]int
+  v := v{1, 2}
+  ```
+
+* ### Selectors can work with pointers to struct
+
+  But only to access fields, not methods.
+
+  Comes in handy for looped list operations in day 9:
+
+  ```go
+  type list struct {
+    val int
+    prev, next *list
+  }
+  l := &list{val: 0}
+  l.prev = l // equal to (*l).prev = l
+  l.next = l // equal to (*l).next = l
+  ```
+
 ## Advent of Code specifics
 
 * One has to remember what Advent of Code is: tasks with quickly implemented solutions. Solution submissions in leaderboard take anywhere from 1 to tens of minutes after task unlock. With that in mind, you have to watch for clues in task description, that allow you to get away from general case solution, that would require significantly more time to implement.
