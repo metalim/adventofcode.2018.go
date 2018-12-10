@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -11,9 +12,14 @@ func _log(a ...interface{}) {
 	fmt.Println(a...)
 }
 
+//
+// Solution
+//
+
 type prep struct{}
 
-func prepare(ss []string) prep {
+func prepare(in string) prep {
+	ss := strings.Split(in, "\n")
 	for _, s := range ss {
 		_log(s)
 	}
@@ -30,12 +36,28 @@ func part2(p prep) int {
 	return n
 }
 
+//
+// tests
+//
+
+func verify(p prep, ex int) {
+	v := part1(p)
+	if v != ex {
+		log.Fatal(v, "!=", ex)
+	}
+}
+
+func test() {
+	verify(prep{}, 1)
+	fmt.Println("tests passed")
+}
+
 func main() {
+	test()
 	for i, in := range ins {
 		fmt.Println("=== for", i, "===")
-		ss := strings.Split(in, "\n")
 		t0 := time.Now()
-		p := prepare(ss)
+		p := prepare(in)
 		fmt.Println("part 1:", part1(p))
 		t1 := time.Now()
 		fmt.Println(t1.Sub(t0))
