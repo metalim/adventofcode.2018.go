@@ -100,27 +100,27 @@ func part2(st prep) string {
 	copy(cs, st.cs)
 	for {
 		sort.Sort(byPos(cs))
+		// filter out while iterating, as described here: https://stackoverflow.com/a/20551116/296066
+		o := 0
 		for i, c := range cs {
 			if c.x < 0 {
 				continue
 			}
 			c = step(c, st.f)
+			valid := true
 			for j, c2 := range cs {
-				if i != j && c.point == c2.point {
-					c.x = -1
+				if (j < o || j > i) && c.point == c2.point {
+					valid = false
 					cs[j].x = -1
 					break
 				}
 			}
-			cs[i] = c
-		}
-		cs2 := make([]cart, 0, len(cs))
-		for _, c := range cs {
-			if c.x >= 0 {
-				cs2 = append(cs2, c)
+			if valid {
+				cs[o] = c
+				o++
 			}
 		}
-		cs = cs2
+		cs = cs[:o] // trim garbage
 		if len(cs) < 2 {
 			return fmt.Sprintf("%d,%d", cs[0].x, cs[0].y)
 		}
