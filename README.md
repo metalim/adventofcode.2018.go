@@ -128,6 +128,40 @@ Quirks found so far:
   l.next = l // equal to (*l).next = l
   ```
 
+* ### Embedding works similar to inheritance
+
+  Day 13:
+
+  ```go
+  type point struct {
+    x, y int
+  }
+  type cart struct {
+    point
+    id int
+  }
+  a := cart{point{5, 7}, 1}
+  b := cart{point{5, 7}, 4}
+
+  if a.x == b.x && a.y == b.y {}
+  // or
+  if a.point == b.point {}
+  // are equivalent to
+  if a.point.x == b.point.x && a.point.y == b.point.y {}
+  ```
+
+  Methods are "inherited" as well.
+
+  ```go
+  func (a point) collides(b point) bool {
+    return a==b
+  }
+
+  crashed = a.collides(b)
+  // is same as
+  crashed = a.point.collides(b.point)
+  ```
+
 ## Advent of Code specifics
 
 * One has to remember what Advent of Code is: tasks with quickly implemented solutions. Solution submissions in leaderboard take anywhere from 1 to tens of minutes after task unlock. With that in mind, you have to watch for clues in task description, that allow you to get away from general case solution, that would require significantly more time to implement.
