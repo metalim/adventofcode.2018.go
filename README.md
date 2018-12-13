@@ -2,7 +2,7 @@
 
 These are my soluions for [Advent of Code 2018](https://adventofcode.com/2018/) written in Go.
 
-The goal is to learn quirks & tricks of Go, witch are new to me, compared to concise dynamically typed languages like Coffeescript, that I'm familiar with, while keeping the code concise, and not go the wordy Java-way.
+The goal is to learn quirks & tricks of Go, which are new to me, compared to concise dynamically typed languages like Coffeescript, that I'm familiar with, while keeping the code concise, and not go the wordy Java-way.
 
 ## "Go gotchas"
 
