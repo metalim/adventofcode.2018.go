@@ -9,7 +9,7 @@ import (
 )
 
 func _log(a ...interface{}) {
-	// fmt.Println(a...)
+	fmt.Println(a...)
 }
 
 func abs(n int) int {
@@ -31,9 +31,10 @@ func (a point) dist(b point) int { return abs(a.x-b.x) + abs(a.y-b.y) }
 
 type unit struct {
 	point
-	s  string
-	v  rune
-	hp int
+	s   string
+	v   rune
+	hp  int
+	pow int
 }
 
 type field [][]rune
@@ -53,12 +54,11 @@ func prepare(in string) prep {
 	var f field
 	var us []unit
 	for y, s := range ss {
-		_log(s)
 		r := []rune(s)
 		f = append(f, r)
 		for x, v := range r {
 			if v == 'E' || v == 'G' {
-				us = append(us, unit{point{y, x}, string(v), v, 200})
+				us = append(us, unit{point{y, x}, string(v), v, 200, 3})
 			}
 		}
 	}
@@ -70,11 +70,8 @@ func (f field) bfs(start point, target rune) map[point]bool {
 	visited := map[point]bool{start: true}
 	next := []point{start}
 	cur := []point{} // to avoid new slices - just swap them
-	// _log("bfs", f, start, string(target))
 
 	for step := 0; len(next) > 0 && len(out) == 0; step++ { //steps
-		// time.Sleep(500 * time.Millisecond)
-		// _log(step, len(next), next)
 		cur, next = next, cur[:0]
 		for _, p := range cur {
 			for d := 0; d <= 3; d++ {
@@ -84,13 +81,11 @@ func (f field) bfs(start point, target rune) map[point]bool {
 				if visited[t] {
 					continue
 				}
-				// _log(t, string(f[y][x]))
 				switch f[y][x] {
 				case target:
 					out[t] = true
 				case '.':
 					next = append(next, t)
-					// _log("+", next)
 				}
 				visited[t] = true
 			}
@@ -109,27 +104,12 @@ func (f field) replace(p point, from, to rune) {
 	}
 }
 
-func (f field) print() {
-	// for _, r := range f {
-	// 	_log(string(r))
-	// }
-}
-
 var ds = [4][2]int{{0, -1}, {-1, 0}, {1, 0}, {0, 1}}
 
 func part1(p prep) int {
 	f := p.f
 	us := p.us
 	for rounds := 0; ; rounds++ {
-		// time.Sleep(time.Second)
-		_log("\nafter", rounds, "rounds")
-		f.print()
-		// for _, u := range us {
-		// 	if u.hp > 0 {
-		// 		_log(u)
-		// 	}
-		// }
-		_log("------")
 		sort.Sort(byPos(us))
 		for i, u := range us {
 			if u.hp <= 0 {
@@ -151,30 +131,33 @@ func part1(p prep) int {
 				}
 			}
 			// if can attack
-			//   attack weakest, and by pos
+			//   attack weakest, sorted by pos
 			// else if has targets
 			//   1. check reachable \
 			//   2. find distances   } bfs
 			//   3. find closest    /
-			//   4. select by pos
-			//   5. move by pos
+			//   4. sort by pos
+			//   5. move 1 step, sorted by pos
 			//   if can attack
-			//     attack weakest, and by pos
+			//     attack weakest, sorted by pos
 			// else
 			//   calc result
 
-			if len(as) > 0 {
+			attack := func() {
 				for _, it := range as { // already sorted by pos
 					a := us[it]
 					if a.hp == hpMin {
-						_log(".", u, "attacking", a)
-						us[it].hp -= 3
+						us[it].hp -= u.pow
 						if us[it].hp <= 0 {
 							f[a.y][a.x] = '.'
 						}
 						break
 					}
 				}
+			}
+
+			if len(as) > 0 {
+				attack()
 			} else if len(ts) > 0 {
 				closest := f.bfs(u.point, us[ts[0]].v)
 				for _, it := range ts {
@@ -183,23 +166,20 @@ func part1(p prep) int {
 						// find next step
 						f.replace(u.point, '.', 'o')
 						steps := f.bfs(t.point, 'o')
-						_log(".", "steps", steps)
 						for _, d := range ds { // select step by pos
 							x := u.x + d[0]
 							y := u.y + d[1]
 							if steps[point{y, x}] {
-								_log(" ", u, "moving to", y, x)
-								//time.Sleep(500 * time.Millisecond)
 								f.replace(u.point, 'o', '.')
 								f[u.y][u.x] = '.'
 								f[y][x] = u.v
 								u.x = x
 								u.y = y
 								us[i] = u
-								break //step sel
+								break //sel step
 							}
 						}
-						break //target sel
+						break //sel target
 					}
 				} // move completed
 				for _, it := range ts {
@@ -212,17 +192,7 @@ func part1(p prep) int {
 					}
 				}
 				if len(as) > 0 { // can attack
-					for _, it := range as { // already sorted by pos
-						a := us[it]
-						if a.hp == hpMin {
-							_log(" and", u, "attacking", a)
-							us[it].hp -= 3
-							if us[it].hp <= 0 {
-								f[a.y][a.x] = '.'
-							}
-							break
-						}
-					}
+					attack()
 				}
 			} else { //no more targets
 				var sum int
@@ -231,49 +201,65 @@ func part1(p prep) int {
 						sum += u.hp
 					}
 				}
-				_log("sum", sum, "rounds", rounds)
 				return sum * rounds
 			}
 		}
 	}
 }
 
-func part2(p prep) int {
-	return 1
+func part2(in string) [2]int {
+	for pow := 4; ; pow++ {
+		st := prepare(in)
+		var elves, alive int
+		for i := range st.us {
+			if st.us[i].v == 'E' {
+				elves++
+				st.us[i].pow = pow
+			}
+		}
+		score := part1(st)
+		for i := range st.us {
+			if st.us[i].v == 'E' && st.us[i].hp > 0 {
+				alive++
+			}
+		}
+		if elves == alive {
+			return [2]int{score, pow}
+		}
+	}
 }
 
 //
 // tests
 //
 
-func verify(p prep, ex int) {
-	v := part1(p)
+func verify(v, ex int) {
 	if v != ex {
 		log.Fatal(v, "!=", ex)
 	}
 }
 
-var tests = map[string]int{
+var tests = map[string][2]int{
 	`#######
 #.G...#
 #...EG#
 #.#.#G#
 #..G#E#
 #.....#
-#######`: 27730,
+#######`: {27730, 4988},
 }
 
 func test() {
 	for t, v := range tests {
 		p := prepare(t)
-		verify(p, v)
+		verify(part1(p), v[0])
+		verify(part2(t)[0], v[1])
 	}
 	fmt.Println("tests passed")
 }
 
 func main() {
 	test()
-	// delete(ins, "google")
 	for i, in := range ins {
 		fmt.Println("=== for", i, "===")
 		t0 := time.Now()
@@ -281,7 +267,7 @@ func main() {
 		fmt.Println("part 1:", part1(p))
 		t1 := time.Now()
 		fmt.Println(t1.Sub(t0))
-		// fmt.Println("part 2:", part2(p))
+		fmt.Println("part 2:", part2(in))
 		t2 := time.Now()
 		fmt.Println(t2.Sub(t1))
 		fmt.Println()
