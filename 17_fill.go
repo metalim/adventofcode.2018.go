@@ -121,16 +121,16 @@ func flow(def def) field {
 		cur, next = next, cur[:0]
 		for _, p := range cur {
 
-			if p.Y == len(f)-1 { // flowing to bottom
-				f[p.Y][p.X] = flowing
-				continue
-			}
-
 			if f[p.Y][p.X]&isFloor != 0 { // checking settled cell
 				continue
 			}
 
 			f[p.Y][p.X] = flowing
+
+			if p.Y == len(f)-1 { // flowing to bottom
+				f[p.Y][p.X] = flowing
+				continue
+			}
 
 			switch f[p.Y+1][p.X] {
 
@@ -147,7 +147,7 @@ func flow(def def) field {
 					if f[p.Y][x]&isFloor == 0 { // can spread to
 						f[p.Y][x] = flowing
 						if f[p.Y+1][x]&isFloor == 0 { // has no floor
-							next = append(next, image.Pt(x, p.Y+1))
+							next = append(next, image.Pt(x, p.Y+1)) // flow to the right
 							break
 						}
 					} else { // blocked
@@ -159,7 +159,7 @@ func flow(def def) field {
 					if f[p.Y][x]&isFloor == 0 { // can spread to
 						f[p.Y][x] = flowing
 						if f[p.Y+1][x]&isFloor == 0 { // has no floor
-							next = append(next, image.Pt(x, p.Y+1))
+							next = append(next, image.Pt(x, p.Y+1)) // flow to the left
 							break
 						}
 					} else { // blocked
@@ -171,7 +171,7 @@ func flow(def def) field {
 					for x := l + 1; x < r; x++ {
 						f[p.Y][x] = settled
 						if f[p.Y-1][x]&isWater != 0 {
-							next = append(next, image.Pt(x, p.Y-1))
+							next = append(next, image.Pt(x, p.Y-1)) // retry currents above
 						}
 					}
 				}
