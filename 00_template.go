@@ -113,4 +113,5 @@ func main() {
 
 var ins = map[string]string{
 	"github": `1`,
-	"google": `2`}
+	"google": `2`,
+}
