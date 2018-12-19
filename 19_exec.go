@@ -129,10 +129,16 @@ func (reg *regs) exec(i inst) {
 }
 
 func (task *task) run(reg regs) regs {
+	hot := make([]int, len(task.c))
 	for 0 <= reg[task.ip] && reg[task.ip] < len(task.c) {
-		reg.exec(task.c[reg[task.ip]])
+		ip := reg[task.ip]
+		reg.exec(task.c[ip])
+		if 0 <= ip && ip < len(hot) {
+			hot[ip]++
+		}
 		reg[task.ip]++
 	}
+	// _log(hot) // show hot code
 	return reg
 }
 
