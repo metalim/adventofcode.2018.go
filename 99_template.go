@@ -34,30 +34,35 @@ func abs(n int) int {
 	return n
 }
 
+func b2i(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 //
 // Solution
 //
 
-type def struct{}
-type proc struct{}
+type task struct{}
 
-func parse(in string) def {
+func parse(in string) task {
 	ss := strings.Split(in, "\n")
 	for _, s := range ss {
 		s = s
 	}
-	return def{}
+	return task{}
 }
 
-func process(def def) proc {
-	return proc{}
+func (task *task) process() {
 }
 
-func part1(def def, proc proc) int {
+func (task *task) part1() int {
 	return 1
 }
 
-func part2(def def, proc proc) int {
+func (task *task) part2() int {
 	return 2
 }
 
@@ -72,10 +77,10 @@ func verify(v, ex int) {
 }
 
 func test() {
-	def := parse(``)
-	proc := process(def)
-	verify(part1(def, proc), 1)
-	// verify(part2(def, proc), 2)
+	task := parse(``)
+	task.process()
+	verify(task.part1(), 1)
+	// verify(task.part2(), 2)
 	fmt.Println("tests passed")
 }
 
@@ -88,22 +93,22 @@ func main() {
 		var t0, t1 time.Time
 
 		t0 = time.Now()
-		def := parse(in)
+		task := parse(in)
 		t1 = time.Now()
 		fmt.Println(Gray("parse:"), Black(t1.Sub(t0)).Bold())
 
 		t0 = time.Now()
-		proc := process(def)
+		task.process()
 		t1 = time.Now()
 		fmt.Println(Gray("process:"), Black(t1.Sub(t0)).Bold())
 
 		t0 = time.Now()
-		v1 := part1(def, proc)
+		v1 := task.part1()
 		t1 = time.Now()
 		fmt.Println(Gray("part 1:"), Black(t1.Sub(t0)).Bold(), Green(v1).Bold())
 
 		t0 = time.Now()
-		v2 := part2(def, proc)
+		v2 := task.part2()
 		t1 = time.Now()
 		fmt.Println(Gray("part 2:"), Black(t1.Sub(t0)).Bold(), Green(v2).Bold())
 
