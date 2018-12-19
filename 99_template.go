@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -28,10 +29,8 @@ func sliceAtoi(in []string) []int {
 }
 
 func abs(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
+	y := n >> 63       // y ← x ⟫ 63
+	return (n ^ y) - y // (x ⨁ y) - y
 }
 
 func b2i(b bool) int {
@@ -72,11 +71,14 @@ func (task *task) part2() int {
 
 func verify(v, ex int) {
 	if v != ex {
-		log.Fatal(v, "!=", ex)
+		log.Output(2, fmt.Sprint(v, "!=", ex))
+		os.Exit(1)
 	}
 }
 
 func test() {
+	log.SetPrefix("[test] ")
+	log.SetFlags(log.Lshortfile)
 	task := parse(``)
 	task.process()
 	verify(task.part1(), 1)
@@ -90,27 +92,28 @@ func main() {
 	delete(ins, "google")
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
-		var t0, t1 time.Time
+		var t0 time.Time
+		var t time.Duration
 
 		t0 = time.Now()
 		task := parse(in)
-		t1 = time.Now()
-		fmt.Println(Gray("parse:"), Black(t1.Sub(t0)).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("parse:"), Black(t).Bold())
 
 		t0 = time.Now()
 		task.process()
-		t1 = time.Now()
-		fmt.Println(Gray("process:"), Black(t1.Sub(t0)).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("process:"), Black(t).Bold())
 
 		t0 = time.Now()
 		v1 := task.part1()
-		t1 = time.Now()
-		fmt.Println(Gray("part 1:"), Black(t1.Sub(t0)).Bold(), Green(v1).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("part 1:"), Black(t).Bold(), Green(v1).Bold())
 
 		t0 = time.Now()
 		v2 := task.part2()
-		t1 = time.Now()
-		fmt.Println(Gray("part 2:"), Black(t1.Sub(t0)).Bold(), Green(v2).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("part 2:"), Black(t).Bold(), Green(v2).Bold())
 
 		fmt.Println()
 	}
