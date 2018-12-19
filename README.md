@@ -114,8 +114,6 @@ Quirks found so far:
 
 * ### Selectors can work with pointers to struct
 
-  But only to access fields, not methods.
-
   Comes in handy for looped list operations in day 9:
 
   ```go
@@ -156,6 +154,9 @@ Quirks found so far:
   func (a point) collides(b point) bool {
     return a==b
   }
+
+  a := cart{point{5, 7}, 1}
+  b := cart{point{5, 7}, 4}
 
   crashed = a.collides(b)
   // is same as

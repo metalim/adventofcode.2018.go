@@ -173,11 +173,10 @@ func loop0(n int) int {
 
 // refactor inside loop. O(N), <100ms for N~1e10
 func loop1(n int) int {
-	var sum, i, j int
+	var sum, i int
 	for i = 1; i <= n; i++ {
-		// divide instead of iterating
-		j = n / i
-		if i*j == n {
+		// mod instead of iterating
+		if n%i == 0 {
 			sum += i
 		}
 	}
@@ -186,13 +185,12 @@ func loop1(n int) int {
 
 // refactor outside loop. Totally optional, but O(sqrt(N)), <100µs! for N~1e10
 func loop(n int) int {
-	var sum, i, j int
+	var sum, i int
 	sq := int(math.Sqrt(float64(n)))
 	// iterate to sqrt(n) only and add both divisors
 	for i = 1; i <= sq; i++ {
-		j = n / i
-		if i*j == n {
-			sum += i + j
+		if n%i == 0 {
+			sum += i + n/i
 		}
 	}
 	return sum
@@ -225,22 +223,21 @@ func main() {
 	test()
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
-		var t0, t1 time.Time
 
-		t0 = time.Now()
+		t0 := time.Now()
 		task := parse(in)
-		t1 = time.Now()
-		fmt.Println(Gray("parse:"), Black(t1.Sub(t0)).Bold())
+		t := time.Since(t0)
+		fmt.Println(Gray("parse:"), Black(t).Bold())
 
 		t0 = time.Now()
 		v1 := task.part1()
-		t1 = time.Now()
-		fmt.Println(Gray("part 1:"), Black(t1.Sub(t0)).Bold(), Green(v1).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("part 1:"), Black(t).Bold(), Green(v1).Bold())
 
 		t0 = time.Now()
 		v2 := task.part2()
-		t1 = time.Now()
-		fmt.Println(Gray("part 2:"), Black(t1.Sub(t0)).Bold(), Green(v2).Bold())
+		t = time.Since(t0)
+		fmt.Println(Gray("part 2:"), Black(t).Bold(), Green(v2).Bold())
 
 		fmt.Println()
 	}
