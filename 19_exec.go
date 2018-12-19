@@ -136,12 +136,12 @@ func (task *task) run(reg regs) regs {
 	return reg
 }
 
-func part1(task task) int {
+func (task *task) part1() int {
 	reg := task.run(regs{})
 	return reg[0]
 }
 
-func part2(task task) int {
+func (task *task) part2() int {
 	task.c[26][1] = 999 // return part1 entry data
 	task.c[35][1] = 999 // return part2 entry data
 	i := task.c[24][3]  // index of entry register
@@ -211,7 +211,7 @@ addr 1 2 3
 setr 1 0 0
 seti 8 0 4
 seti 9 0 5`)
-	verify(part1(task), 7)
+	verify(task.part1(), 7)
 	fmt.Println("tests passed")
 }
 
@@ -227,12 +227,12 @@ func main() {
 		fmt.Println(Gray("parse:"), Black(t1.Sub(t0)).Bold())
 
 		t0 = time.Now()
-		v1 := part1(task)
+		v1 := task.part1()
 		t1 = time.Now()
 		fmt.Println(Gray("part 1:"), Black(t1.Sub(t0)).Bold(), Green(v1).Bold())
 
 		t0 = time.Now()
-		v2 := part2(task)
+		v2 := task.part2()
 		t1 = time.Now()
 		fmt.Println(Gray("part 2:"), Black(t1.Sub(t0)).Bold(), Green(v2).Bold())
 
