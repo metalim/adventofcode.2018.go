@@ -172,12 +172,17 @@ Quirks found so far:
 
 * Day 6 solution **checker** had a bug, that caused 20% of part1 solutions and 33% of part2 solutions to be detected as invalid ones. Bug was fixed 1 hour 42 minutes after unlock. My github-linked account had no issues, but my google-linked account was rejecting both parts. First I "cheated", by manually selecting the next largest area (3144 instead of 3358), thinking my solver had an issue detecting infinity of the area. But trying to submit solution of part2 confirmed Advent of Code has an issue, as the solution is trivial and does not depend on edge detection. So I added `_print()` function, to visualize the map and confirm my sanity for part1 solution. After the bug was discovered and fixed, Advent of Code staff removed Day 6 scores from affecting global Leaderboard.
 
+* Day 19 task part 2 requires to analyze assembly code, rewrite it in higher-level language and refactor. This has to be done manually. In that specific case code was calculating sum of all (not only prime) factors of a number. Rewritting nested loop makes program run in <100ms instead of 10 years, refactoring outer loop brings it down to <100µs.
+
 ## Input
 
-Multiple inputs are provided in global variable
+Multiple inputs are provided in global `ins` variable:
 
 ```go
-var ins map[string]string
+ins := map[string]string{
+  "a":`1`,
+  "b":`2`,
+}
 ```
 
 That's because I submit solutions to 2 different accounts: one linked to github, another - to google. I would stick to github one, but google account has private leaderboard from previous year, that I want to track, but have no joining link for it.
