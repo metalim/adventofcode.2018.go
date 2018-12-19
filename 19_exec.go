@@ -152,7 +152,7 @@ func (task *task) part2() int {
 	return loop(reg2[i])
 }
 
-// corresponging to Assembly Go code. O(N**2), takes forever for N~1e10
+// corresponging to Assembly Go code. O(N**2), takes around 10 years for N~1e10
 func loop0(n int) int {
 	var sum, i, j int
 	for i = 1; i <= n; i++ {
