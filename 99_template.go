@@ -40,6 +40,18 @@ func b2i(b bool) int {
 	return 0
 }
 
+type cell = int
+type row []cell
+type field []row
+
+func makeField(dim int) field {
+	m := make(field, 0, dim)
+	for y := 0; y < dim; y++ {
+		m = append(m, make(row, dim))
+	}
+	return m
+}
+
 //
 // Solution
 //
@@ -54,14 +66,14 @@ func parse(in string) task {
 	return task{}
 }
 
-func (task *task) process() {
+func (t *task) process() {
 }
 
-func (task *task) part1() int {
+func (t *task) part1() int {
 	return 1
 }
 
-func (task *task) part2() int {
+func (t *task) part2() int {
 	return 2
 }
 
@@ -71,49 +83,52 @@ func (task *task) part2() int {
 
 func verify(v, ex int) {
 	if v != ex {
-		log.Output(2, fmt.Sprint(v, "!=", ex))
+		log.Output(3, fmt.Sprint(v, "!=", ex))
 		os.Exit(1)
 	}
 }
 
 func test() {
+	t0 := time.Now()
 	log.SetPrefix("[test] ")
 	log.SetFlags(log.Lshortfile)
-	task := parse(``)
-	task.process()
-	verify(task.part1(), 1)
-	// verify(task.part2(), 2)
-	fmt.Println("tests passed")
+	test1 := func(in string, ex int) {
+		t := parse(in)
+		t.process()
+		verify(t.part1(), ex)
+	}
+	test1(``, 1)
+	fmt.Println("tests passed", Black(time.Since(t0)).Bold())
 }
 
 func main() {
 	test()
-	delete(ins, "github")
+	// delete(ins, "github")
 	delete(ins, "google")
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
 		var t0 time.Time
-		var t time.Duration
+		var d time.Duration
 
 		t0 = time.Now()
-		task := parse(in)
-		t = time.Since(t0)
-		fmt.Println(Gray("parse:"), Black(t).Bold())
+		t := parse(in)
+		d = time.Since(t0)
+		fmt.Println(Gray("parse:"), Black(d).Bold())
 
 		t0 = time.Now()
-		task.process()
-		t = time.Since(t0)
-		fmt.Println(Gray("process:"), Black(t).Bold())
+		t.process()
+		d = time.Since(t0)
+		fmt.Println(Gray("process:"), Black(d).Bold())
 
 		t0 = time.Now()
-		v1 := task.part1()
-		t = time.Since(t0)
-		fmt.Println(Gray("part 1:"), Black(t).Bold(), Green(v1).Bold())
+		v1 := t.part1()
+		d = time.Since(t0)
+		fmt.Println(Gray("part 1:"), Black(d).Bold(), Green(v1).Bold())
 
 		t0 = time.Now()
-		v2 := task.part2()
-		t = time.Since(t0)
-		fmt.Println(Gray("part 2:"), Black(t).Bold(), Green(v2).Bold())
+		v2 := t.part2()
+		d = time.Since(t0)
+		fmt.Println(Gray("part 2:"), Black(d).Bold(), Green(v2).Bold())
 
 		fmt.Println()
 	}
