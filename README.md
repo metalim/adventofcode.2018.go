@@ -73,28 +73,28 @@ Quirks found so far:
   The rest, as with arrays, is passed by value.
 
   ```go
-  type ent struct {n int}
-  func inc(e ent){
-    e.n++
+  type Some struct {n int}
+  func inc(a Some){
+    a.n++
   }
 
-  e := ent{0}
-  inc(e)
-  fmt.Println(e.n) // still 0
+  b := Some{0}
+  inc(b)
+  fmt.Println(b.n) // still 0
   ```
 
   This has to be taken into account, when you iterate:
 
   ```go
-  s := []struct{n int}{/*...*/}
+  slice := []struct{n int}{/*...*/}
 
-  for _, e := range s {
-    e.n++ // woops, we're changing a copy !
+  for _, obj := range slice {
+    obj.n++ // woops, we're changing a copy !
   }
 
   // proper way
-  for i := range s {
-    s[i].n++
+  for i := range slice {
+    slice[i].n++
   }
 
   ```
@@ -103,13 +103,14 @@ Quirks found so far:
 
   For that reason you should not have several files in same folder, containing same function definition. For example, golint complains that I have `func main()` redefined, because I keep all Advent of Code files in single folder. While this is not acceptable in larger projects, Advent of Code solutions are just single files, so I decided to ignore this rule, instead of creating separate folder for each day. It works, and is more accessible.
 
-* ### Type names and variable names do not conflict
+* ### Type names and variable names do not conflict (with rare exceptions)
 
   While this is not reader-friendly, same name can mean type and variable:
 
   ```go
-  type v [2]int
-  v := v{1, 2}
+  type some [2]int
+  some := some{1, 2}
+  some[0] = 3
   ```
 
 * ### Selectors can work with pointers to struct
@@ -128,16 +129,24 @@ Quirks found so far:
 
 * ### Embedding works similar to inheritance
 
+  That is: all fields and methods are inherited.
+
   Day 13:
 
   ```go
   type point struct {
     x, y int
   }
+
+  func (a point) collides(b point) bool {
+    return a==b
+  }
+
   type cart struct {
     point
     id int
   }
+
   a := cart{point{5, 7}, 1}
   b := cart{point{5, 7}, 4}
 
@@ -146,21 +155,38 @@ Quirks found so far:
   if a.point == b.point {}
   // are equivalent to
   if a.point.x == b.point.x && a.point.y == b.point.y {}
-  ```
-
-  Methods are "inherited" as well.
-
-  ```go
-  func (a point) collides(b point) bool {
-    return a==b
-  }
-
-  a := cart{point{5, 7}, 1}
-  b := cart{point{5, 7}, 4}
 
   crashed = a.collides(b)
   // is same as
   crashed = a.point.collides(b.point)
+  ```
+
+* ### Type definition, on the other hand, hides methods "inherited" from another type
+
+  ```go
+    type point struct {
+      x, y int
+    }
+    func (a point) collides(b point) bool {
+      return a==b
+    }
+
+    type pos point
+
+    a := pos{1,2}
+    b := pos{3,4}
+    a.collides(b) // woops: a.collides undefined (type pos has no field or method collides)
+  ```
+
+  Solution is type aliasing, which just creates a new name for the same type:
+
+  ```go
+    type pos = point // note the `=`
+
+    a := pos{1,2}
+    b := pos{3,4}
+    a.collides(b) // works
+
   ```
 
 ## Advent of Code specifics
