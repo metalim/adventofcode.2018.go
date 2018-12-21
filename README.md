@@ -6,6 +6,8 @@ The goal is to learn quirks & tricks of Go, which are new to me, compared to con
 
 ## "Go gotchas"
 
+Go is low-level language with built-in concurrency and garbage collection, designed as a highly efficient C++ or Java competitor. To achieve high speed (both in compilation and execution), some surprising design decisions were made. It takes time to learn them.
+
 Quirks found so far:
 
 * ### Strings are **arrays of bytes**, encoded in **UTF-8**
@@ -64,7 +66,7 @@ Quirks found so far:
   for w := range s {/* iterate set */}
   ```
 
-  There is only one restriction: data types have to be comparable (`a==b`). So, no slices or maps allowed, but pointers to them are ok.
+  There is only one restriction: data types have to be comparable (`a==b`). So, no slices or maps are allowed in map keys, but pointers to them are ok.
 
 * ### Everything is passed by value
 
@@ -105,7 +107,7 @@ Quirks found so far:
 
 * ### Type names and variable names do not conflict (with rare exceptions)
 
-  While this is not reader-friendly, same name can mean type and variable:
+  While this is not reader-friendly, same name can be used to define a type and a variable:
 
   ```go
   type some [2]int
@@ -115,7 +117,7 @@ Quirks found so far:
 
 * ### Selectors can work with pointers to struct
 
-  Comes in handy for looped list operations in day 9:
+  Syntax is the same. Comes in handy for looped list operations in day 9:
 
   ```go
   type list struct {
@@ -161,7 +163,7 @@ Quirks found so far:
   crashed = a.point.collides(b.point)
   ```
 
-* ### Type definition, on the other hand, hides methods "inherited" from another type
+* ### Type definition, on the other hand, does not inherit methods from another type
 
   ```go
     type point struct {
@@ -188,6 +190,8 @@ Quirks found so far:
     a.collides(b) // works
 
   ```
+
+  Handy, when you want to replace type with another one, that has same names for fields and methods.
 
 ## Advent of Code specifics
 
