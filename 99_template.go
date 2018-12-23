@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"os"
 	"strconv"
@@ -41,15 +42,59 @@ func b2i(b bool) int {
 }
 
 type cell = int
+type pos = image.Point
+type rect = image.Rectangle
+
 type row []cell
 type field []row
 
-func makeField(dim int) field {
-	m := make(field, 0, dim)
-	for y := 0; y < dim; y++ {
-		m = append(m, make(row, dim))
+// map2d = field with bounds.
+type map2d struct {
+	f      field
+	cap, b rect
+	locked bool
+}
+
+func makeMap2d(w, h int) map2d {
+	f := make(field, 0, h)
+	for y := 0; y < h; y++ {
+		f = append(f, make(row, w))
 	}
-	return m
+	return map2d{f: f, cap: rect{pos{0, 0}, pos{w, h}}}
+}
+
+func (m *map2d) get(p pos) cell {
+	return m.f[p.Y][p.X]
+}
+
+func (m *map2d) lock() {
+	m.locked = true
+}
+
+func (m *map2d) set(p pos, c cell) {
+	if m.locked {
+		panic("map is locked")
+	}
+	m.f[p.Y][p.X] = c
+	if !p.In(m.b) {
+		m.b = m.b.Union(rect{p, p.Add(pos{1, 1})})
+	}
+}
+
+// pStep returns position of step in specified direction. 0123 -> ESWN
+func pStep(p pos, d int) pos {
+	return pos{p.X + (1-d)%2, p.Y + (2-d)%2}
+}
+
+// pStep2 returns position of step in specified direction. 0123 -> NEWS
+// [0,-1], [-1,0], [1,0], [0,1]
+func pStep2(p pos, d int) pos {
+	x := p.X + (1-d)%2
+	y := p.Y + (2-d)%2
+	panic("WIP")
+	x = d % 3 * (1)
+	y = 1
+	return pos{x, y}
 }
 
 //
