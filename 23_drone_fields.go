@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"os"
 	"regexp"
 	"strconv"
@@ -16,11 +18,6 @@ func _log(a ...interface{}) {
 	fmt.Println(a...)
 }
 
-func _log1(a ...interface{}) {
-	fmt.Println(a...)
-	fmt.Scanln()
-}
-
 func sliceAtoi(in []string) []int {
 	out := make([]int, len(in))
 	for i, v := range in {
@@ -32,25 +29,6 @@ func sliceAtoi(in []string) []int {
 func abs(n int) int {
 	y := n >> 63       // y ← x ⟫ 63
 	return (n ^ y) - y // (x ⨁ y) - y
-}
-
-func b2i(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
-type cell = int
-type row []cell
-type field []row
-
-func makeField(dim int) field {
-	m := make(field, 0, dim)
-	for y := 0; y < dim; y++ {
-		m = append(m, make(row, dim))
-	}
-	return m
 }
 
 //
@@ -75,8 +53,43 @@ func (b bot) inRange(p pos3) bool {
 	return b.r >= b.p.manh(p)
 }
 
+type rect3 struct {
+	min, max pos3
+}
+
+func (r *rect3) cover(p pos3) {
+	if r.max.x <= r.min.x || r.max.y <= r.min.y || r.max.z <= r.min.z {
+		r.min = p
+		r.max = pos3{p.x + 1, p.y + 1, p.z + 1}
+		return
+	}
+	if r.min.x > p.x {
+		r.min.x = p.x
+	}
+	if r.min.y > p.y {
+		r.min.y = p.y
+	}
+	if r.min.z > p.z {
+		r.min.z = p.z
+	}
+	if r.max.x < p.x {
+		r.max.x = p.x
+	}
+	if r.max.y < p.y {
+		r.max.y = p.y
+	}
+	if r.max.z < p.z {
+		r.max.z = p.z
+	}
+}
+
+func (r *rect3) dx() int {
+	return r.max.x - r.min.x
+}
+
 type task struct {
-	bs []bot
+	bs     []bot
+	bounds rect3
 }
 
 func parse(in string) task {
@@ -87,9 +100,21 @@ func parse(in string) task {
 	for _, s := range ss {
 		ms := r.FindAllString(s, 4)
 		ns := sliceAtoi(ms)
-		t.bs = append(t.bs, bot{p: pos3{ns[0], ns[1], ns[2]}, r: ns[3]})
+		p := pos3{ns[0], ns[1], ns[2]}
+		t.bs = append(t.bs, bot{p: p, r: ns[3]})
+		t.bounds.cover(p)
 	}
 	return t
+}
+
+func (t *task) inRange(p pos3) int {
+	var n int
+	for _, b := range t.bs {
+		if b.inRange(p) {
+			n++
+		}
+	}
+	return n
 }
 
 func (t *task) process() {
@@ -100,7 +125,6 @@ func (t *task) process() {
 			}
 		}
 	}
-	// _log(t)
 }
 
 func (t *task) part1() (max int) {
@@ -114,7 +138,161 @@ func (t *task) part1() (max int) {
 }
 
 func (t *task) part2() int {
-	return 2
+	return t.part2Binary()
+}
+
+// just find local maximum, and hope we're in largest blob.
+// key feature here is inRange criteria depending on current delta!
+func (t *task) part2Binary() int {
+	var bestM, best int
+	var bestP pos3
+
+	origin := pos3{0, 0, 0}
+	delta := int(math.Pow(2, math.Ceil(math.Log2(float64(t.bounds.dx())))))
+
+	for ; delta > 0; delta /= 2 {
+		best = 0
+		for x := t.bounds.min.x; x < t.bounds.max.x; x += delta {
+			for y := t.bounds.min.y; y < t.bounds.max.y; y += delta {
+				for z := t.bounds.min.z; z < t.bounds.max.z; z += delta {
+					p := pos3{x, y, z}
+					var sum int
+					for _, b := range t.bs {
+						if b.p.manh(p) < b.r+delta { // if in range, but!!! range is extended by current delta -> include the bot.
+							sum++
+						}
+					}
+					if best < sum {
+						best = sum
+						bestP = p
+						bestM = origin.manh(p)
+					} else if best == sum {
+						m := origin.manh(p)
+						if bestM > m {
+							bestM = m
+							bestP = p
+						}
+					}
+				}
+			}
+		}
+		// re-evaluate everything inside _current_ delta: 5x5x5 points.
+		t.bounds.min.x = bestP.x - delta
+		t.bounds.min.y = bestP.y - delta
+		t.bounds.min.z = bestP.z - delta
+		t.bounds.max.x = bestP.x + delta + 1
+		t.bounds.max.y = bestP.y + delta + 1
+		t.bounds.max.z = bestP.z + delta + 1
+	}
+	return bestM
+}
+
+////////////////////////////////////////////////////////////////////////
+// following are failed attempts.
+//
+// btw, here's how bot range intersections can look like:
+// https://puu.sh/Cmdhf/2adab0816a.png
+//
+// Intersection of _any_ amount of xyz-axis-aligned octahedrons is described
+// just by 4 ranges in following axis: x+y+z, x+y-z, x-y+z, x-y-z.
+//
+
+type cross struct {
+	i, j int
+	r    int
+}
+
+// each step is n**2 in general. As we know largest overlap zone has >800 drones.
+// So, 2**800 crosses is a bit tooooo much.
+func (t *task) part2Cross() int {
+	cs := []cross{}
+	for i, b := range t.bs[1:] {
+		for j, b2 := range t.bs[:i] {
+			if i == j {
+				panic("wat?")
+				continue
+			}
+			m := b.p.manh(b2.p)
+			if m <= b.r+b2.r {
+				w := b.r + b2.r - m + 1
+				cs = append(cs, cross{i, j, w})
+				//_log(len(cs), "cross", i, j, w)
+			}
+		}
+	}
+	return 0
+}
+
+// just wander randomly :), then slowly crawl towards 0.
+func (t *task) part2Random() int {
+	var max, count int
+	var pMax pos3
+	rand.Seed(time.Now().UTC().UnixNano())
+	stop := make(chan bool)
+	stopped := make(chan bool)
+
+	go func() {
+	FOR:
+		for i := 0; i < 1e8; i++ {
+			select {
+			case <-stop:
+				_log("stop received")
+				break FOR
+			default:
+				x := rand.Intn(1e8)
+				y := rand.Intn(1e8)
+				z := rand.Intn(1e8)
+				p := pos3{x, y, z}
+				n := t.inRange(p)
+				if max < n {
+					count++
+					_log("larger", max, n, count, p)
+					max = n
+					pMax = p
+				}
+			}
+		}
+		stopped <- true
+	}()
+	fmt.Scanln()
+	stop <- true
+	<-stopped
+
+	p := pos3{}
+	pNext := pos3{49327968, 20248823, 50482995}
+	max = t.inRange(pNext)
+	_log("init max", max)
+	for ; p != pNext; count++ {
+		p = pNext
+		pNext.x--
+		n := t.inRange(pNext)
+		if max > n {
+			pNext.x++
+		} else if max < n {
+			_log(count, "new max", max, n, pNext)
+			max = n
+		}
+
+		pNext.y--
+		n = t.inRange(pNext)
+		if max > n {
+			pNext.y++
+		} else if max < n {
+			_log(count, "new max", max, n, pNext)
+			max = n
+		}
+
+		pNext.z--
+		n = t.inRange(pNext)
+		if max > n {
+			pNext.z++
+		} else if max < n {
+			_log(count, "new max", max, n, pNext)
+			max = n
+		}
+	}
+	_log(p)
+	return p.manh(pos3{})
 }
 
 //
@@ -137,11 +315,12 @@ func test() {
 		t.process()
 		verify(t.part1(), ex)
 	}
-	// test2 := func(in string, ex int) {
-	// 	t := parse(in)
-	// 	t.process()
-	// 	verify(t.part2(), ex)
-	// }
+	test2 := func(in string, ex int) {
+		t := parse(in)
+		t.process()
+		verify(t.part2(), ex)
+	}
+	test2 = test2
 	test1(`pos=<0,0,0>, r=4
 pos=<1,0,0>, r=1
 pos=<4,0,0>, r=3
@@ -152,19 +331,18 @@ pos=<1,1,1>, r=1
 pos=<1,1,2>, r=1
 pos=<1,3,1>, r=1`, 7)
 
-	// 	test2(`pos=<10,12,12>, r=2
-	// pos=<12,14,12>, r=2
-	// pos=<16,12,12>, r=4
-	// pos=<14,14,14>, r=6
-	// pos=<50,50,50>, r=200
-	// pos=<10,10,10>, r=5`, 36)
+	test2(`pos=<10,12,12>, r=2
+pos=<12,14,12>, r=2
+pos=<16,12,12>, r=4
+pos=<14,14,14>, r=6
+pos=<50,50,50>, r=200
+pos=<10,10,10>, r=5`, 36)
+
 	fmt.Println("tests passed", Black(time.Since(t0)).Bold())
 }
 
 func main() {
 	test()
-	// delete(ins, "github")
-	// delete(ins, "google")
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
 		var t0 time.Time
