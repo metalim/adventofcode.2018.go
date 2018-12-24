@@ -92,11 +92,7 @@ func parse(in string) (t task) {
 	t.in = in
 	t.imm = parseArmy(ins[0], "Immune")
 	t.inf = parseArmy(ins[1], "Infect")
-	_log(len(t.imm), len(t.inf))
 	return t
-}
-
-func (t *task) process() {
 }
 
 type fight struct {
@@ -145,7 +141,7 @@ func (g *group) chooseFrom(ar army, taken map[*group]bool) (fight, bool) {
 	}
 	taken[best] = true
 
-	return fight{g, best}, bestDmg >= best.hp
+	return fight{g, best}, bestDmg >= best.hp // skip fights that deal no damage due to high unit HP.
 }
 
 type byPowInit army
@@ -179,8 +175,6 @@ func (o fight) attack() {
 	if kill > o.a.n {
 		kill = o.a.n
 	}
-	// _log(o)
-	// _log("attack", o.g.at, "defence", o.a.def)
 	o.a.n -= kill
 	_log(o.g.id, "deals", dmg, "dmg, and kills", kill, o.a.id, ", remaining:", o.a.n)
 }
@@ -216,13 +210,8 @@ func (t *task) part1() int {
 		queue := make(map[int]fight)
 
 		_log("\nstep", step)
-		// _log("\nimm->")
 		t.imm.chooseTargets(t.inf, queue)
-		// _log("imm->inf", queue)
-
-		// _log("\ninf->")
 		t.inf.chooseTargets(t.imm, queue)
-		// _log("inf->imm", queue)
 
 		if len(queue) == 0 { // dead lock
 			t.imm = army{}
@@ -290,12 +279,10 @@ func test() {
 	log.SetFlags(log.Lshortfile)
 	test1 := func(in string, ex int) {
 		t := parse(in)
-		t.process()
 		verify(t.part1(), ex)
 	}
 	test2 := func(in string, ex int) {
 		t := parse(in)
-		t.process()
 		verify(t.part2(), ex)
 	}
 	in := `Immune System:
@@ -327,11 +314,6 @@ func main() {
 		t := parse(in)
 		d = time.Since(t0)
 		fmt.Println(Gray("parse:"), Black(d).Bold())
-
-		t0 = time.Now()
-		t.process()
-		d = time.Since(t0)
-		fmt.Println(Gray("process:"), Black(d).Bold())
 
 		t0 = time.Now()
 		v1 := t.part1()
