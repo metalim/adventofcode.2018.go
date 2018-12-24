@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"image"
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -13,13 +13,18 @@ import (
 	. "github.com/logrusorgru/aurora"
 )
 
+var debug = 1
+
 func _log(a ...interface{}) {
-	fmt.Println(a...)
+	if debug > 0 {
+		fmt.Println(a...)
+	}
 }
 
-func _log1(a ...interface{}) {
-	fmt.Println(a...)
-	fmt.Scanln()
+func _print(a ...interface{}) {
+	if debug >= 0 {
+		fmt.Println(a...)
+	}
 }
 
 func sliceAtoi(in []string) []int {
@@ -30,88 +35,22 @@ func sliceAtoi(in []string) []int {
 	return out
 }
 
-func abs(n int) int {
-	y := n >> 63       // y ← x ⟫ 63
-	return (n ^ y) - y // (x ⨁ y) - y
-}
-
-func b2i(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
-
-type cell = int
-type pos = image.Point
-type rect = image.Rectangle
-
-type row []cell
-type field []row
-
-// map2d = field with bounds.
-type map2d struct {
-	f      field
-	cap, b rect
-	locked bool
-}
-
-func makeMap2d(w, h int) map2d {
-	f := make(field, 0, h)
-	for y := 0; y < h; y++ {
-		f = append(f, make(row, w))
-	}
-	return map2d{f: f, cap: rect{pos{0, 0}, pos{w, h}}}
-}
-
-func (m *map2d) get(p pos) cell {
-	return m.f[p.Y][p.X]
-}
-
-func (m *map2d) lock() {
-	m.locked = true
-}
-
-func (m *map2d) set(p pos, c cell) {
-	if m.locked {
-		panic("map is locked")
-	}
-	m.f[p.Y][p.X] = c
-	if !p.In(m.b) {
-		m.b = m.b.Union(rect{p, p.Add(pos{1, 1})})
-	}
-}
-
-// pStep returns position of step in specified direction. 0123 -> ESWN
-func pStep(p pos, d int) pos {
-	return pos{p.X + (1-d)%2, p.Y + (2-d)%2}
-}
-
-// pStep2 returns position of step in specified direction. 0123 -> NEWS
-// [0,-1], [-1,0], [1,0], [0,1]
-func pStep2(p pos, d int) pos {
-	x := p.X + (1-d)%2
-	y := p.Y + (2-d)%2
-	panic("WIP")
-	x = d % 3 * (1)
-	y = 1
-	return pos{x, y}
-}
-
 ////////////////////////////////////////////////////////////////////////
 // Solution
 //
 
 type attack = string
 type group struct {
-	n, hp  int
-	im, we []attack
-	pow    int
-	at     attack
-	init   int
+	n, hp int
+	def   map[attack]int
+	pow   int
+	at    attack
+	init  int
+	id    string
 }
-type army []group
+type army []*group
 type task struct {
+	in  string
 	imm army
 	inf army
 }
@@ -122,9 +61,9 @@ func parse(in string) (t task) {
 	rw := regexp.MustCompile("weak to ([^;)]+)")
 	ins := strings.Split(in, "\n\n")
 
-	parseArmy := func(sa string) (ar army) {
+	parseArmy := func(sa, name string) (ar army) {
 		ss := strings.Split(sa, "\n")
-		for _, s := range ss[1:] {
+		for i, s := range ss[1:] {
 			if len(s) == 0 {
 				continue
 			}
@@ -133,36 +72,208 @@ func parse(in string) (t task) {
 			mn := sliceAtoi(m)
 			mi := ri.FindStringSubmatch(m[2])
 			mw := rw.FindStringSubmatch(m[2])
-			var im, we []string
+			def := make(map[attack]int)
 			if len(mi) > 0 {
-				im = strings.Split(mi[1], ", ")
+				for _, k := range strings.Split(mi[1], ", ") {
+					def[k] = 1
+				}
 			}
 			if len(mw) > 0 {
-				we = strings.Split(mw[1], ", ")
+				for _, k := range strings.Split(mw[1], ", ") {
+					def[k] = -1
+				}
 			}
-			g := group{n: mn[0], hp: mn[1], im: im, we: we, pow: mn[3], at: m[4], init: mn[5]}
-			ar = append(ar, g)
+			g := group{n: mn[0], hp: mn[1], def: def, pow: mn[3], at: m[4], init: mn[5], id: name + strconv.Itoa(i+1)}
+			ar = append(ar, &g)
 		}
 		return ar
 	}
 
-	t.imm = parseArmy(ins[0])
-	t.inf = parseArmy(ins[1])
-	return task{}
+	t.in = in
+	t.imm = parseArmy(ins[0], "Immune")
+	t.inf = parseArmy(ins[1], "Infect")
+	_log(len(t.imm), len(t.inf))
+	return t
 }
 
 func (t *task) process() {
 }
 
-func (t *task) part1() int {
-	return 1
+type fight struct {
+	g, a *group
 }
+
+func (g *group) getDmgTo(g2 *group) int {
+	dmg := g.n * g.pow * (1 - g2.def[g.at])
+	return dmg
+}
+
+func (g *group) chooseFrom(ar army, taken map[*group]bool) (fight, bool) {
+	var best *group
+	bestDmg := -1
+
+	for i := range ar {
+		if taken[ar[i]] {
+			continue
+		}
+
+		dmg := g.getDmgTo(ar[i])
+
+		if bestDmg > dmg {
+			continue
+		}
+
+		if bestDmg == dmg {
+			if best.n*best.pow > ar[i].n*ar[i].pow {
+				continue
+			}
+
+			if best.n*best.pow == ar[i].n*ar[i].pow {
+				if best.init > ar[i].init {
+					continue
+				}
+			}
+		}
+
+		// else -> choose new best.
+		bestDmg = dmg
+		best = ar[i]
+
+	}
+	if bestDmg <= 0 {
+		return fight{g, nil}, false
+	}
+	taken[best] = true
+
+	return fight{g, best}, bestDmg >= best.hp
+}
+
+type byPowInit army
+
+func (a byPowInit) Len() int { return len(a) }
+func (a byPowInit) Less(i, j int) bool {
+	return a[i].n*a[i].pow > a[j].n*a[j].pow || a[i].n*a[i].pow == a[j].n*a[j].pow && a[i].init > a[j].init
+}
+func (a byPowInit) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+func (ar *army) chooseTargets(enemies army, queue map[int]fight) {
+	taken := make(map[*group]bool)
+	sort.Sort(byPowInit(*ar))
+	for _, g := range *ar {
+		if f, ok := g.chooseFrom(enemies, taken); ok {
+			_log(g.id, g.n*g.pow, g.init, "will attack", f.a.id, "for", g.getDmgTo(f.a))
+			queue[g.init] = f
+			continue
+		}
+		_log(g.id, g.n*g.pow, g.init, "will skip")
+	}
+}
+
+func (o fight) attack() {
+	if o.g.n <= 0 {
+		_log(o.g.id, "can't attack: it is dead")
+		return
+	}
+	dmg := o.g.getDmgTo(o.a)
+	kill := dmg / o.a.hp
+	if kill > o.a.n {
+		kill = o.a.n
+	}
+	// _log(o)
+	// _log("attack", o.g.at, "defence", o.a.def)
+	o.a.n -= kill
+	_log(o.g.id, "deals", dmg, "dmg, and kills", kill, o.a.id, ", remaining:", o.a.n)
+}
+
+func (ar *army) removeDead() {
+	var out int
+	for _, g := range *ar {
+		if g.n > 0 {
+			(*ar)[out] = g
+			out++
+		}
+	}
+	*ar = (*ar)[:out]
+}
+
+func (ar *army) totalUnits() (sum int) {
+	for _, g := range *ar {
+		if g.n > 0 {
+			sum += g.n
+		}
+	}
+	return sum
+}
+
+////////////////////////////////////////////////////////////////////////
+// part 1
+//
+
+func (t *task) part1() int {
+	max := len(t.imm) + len(t.inf)
+
+	for step := 1; len(t.imm) > 0 && len(t.inf) > 0; step++ {
+		queue := make(map[int]fight)
+
+		_log("\nstep", step)
+		// _log("\nimm->")
+		t.imm.chooseTargets(t.inf, queue)
+		// _log("imm->inf", queue)
+
+		// _log("\ninf->")
+		t.inf.chooseTargets(t.imm, queue)
+		// _log("inf->imm", queue)
+
+		if len(queue) == 0 { // dead lock
+			t.imm = army{}
+			t.inf = army{}
+			return 0
+		}
+		for i := max; i > 0; i-- {
+			if o, ok := queue[i]; ok {
+				o.attack()
+			}
+		}
+
+		// remove dead groups
+		t.imm.removeDead()
+		t.inf.removeDead()
+	}
+	if len(t.imm) > 0 {
+		return t.imm.totalUnits()
+	}
+	return t.inf.totalUnits()
+}
+
+////////////////////////////////////////////////////////////////////////
+// part 2
+//
 
 func (t *task) part2() int {
-	return 2
+	boost := 1
+	d := 256
+
+	for {
+		*t = parse(t.in)
+		for _, g := range t.imm {
+			g.pow += boost
+		}
+		t.part1()
+		if len(t.imm) <= 0 {
+			boost += d
+			continue
+		}
+		if d == 1 {
+			_print(Black("boost is").Bold(), Cyan(boost))
+			return t.imm.totalUnits()
+		}
+		d /= 2
+		boost -= d
+	}
+	return 0
 }
 
-//
+////////////////////////////////////////////////////////////////////////
 // tests
 //
 
@@ -182,21 +293,31 @@ func test() {
 		t.process()
 		verify(t.part1(), ex)
 	}
-	test1(`Immune System:
+	test2 := func(in string, ex int) {
+		t := parse(in)
+		t.process()
+		verify(t.part2(), ex)
+	}
+	in := `Immune System:
 17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2
 989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3
 
 Infection:
 801 units each with 4706 hit points (weak to radiation) with an attack that does 116 bludgeoning damage at initiative 1
-4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4
-`, 1)
+4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4`
+	test1(in, 5216)
+	test2(in, 51)
 	fmt.Println("tests passed", Black(time.Since(t0)).Bold())
 }
 
+////////////////////////////////////////////////////////////////////////
+// main
+//
 func main() {
+	debug = -1
 	test()
-	// delete(ins, "github")
-	delete(ins, "google")
+	debug = 0
+
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
 		var t0 time.Time
@@ -249,8 +370,8 @@ Infection:
 1446 units each with 51571 hit points (weak to cold) with an attack that does 63 fire damage at initiative 18
 8230 units each with 12331 hit points (weak to bludgeoning; immune to slashing) with an attack that does 2 fire damage at initiative 12
 4111 units each with 17381 hit points with an attack that does 7 cold damage at initiative 10
-366 units each with 28071 hit points (weak to cold, slashing) with an attack that does 150 fire damage at initiative 16
-`,
+366 units each with 28071 hit points (weak to cold, slashing) with an attack that does 150 fire damage at initiative 16`,
+
 	"google": `Immune System:
 3400 units each with 1430 hit points (immune to fire, radiation, slashing) with an attack that does 4 radiation damage at initiative 4
 138 units each with 8650 hit points (weak to bludgeoning; immune to slashing, cold, radiation) with an attack that does 576 slashing damage at initiative 16
@@ -273,6 +394,5 @@ Infection:
 1570 units each with 30419 hit points (weak to radiation, cold; immune to fire) with an attack that does 35 slashing damage at initiative 1
 1428 units each with 21393 hit points (weak to radiation) with an attack that does 29 cold damage at initiative 6
 1014 units each with 25717 hit points (weak to fire) with an attack that does 47 fire damage at initiative 3
-7933 units each with 29900 hit points (immune to bludgeoning, radiation, slashing) with an attack that does 5 slashing damage at initiative 20
-`,
+7933 units each with 29900 hit points (immune to bludgeoning, radiation, slashing) with an attack that does 5 slashing damage at initiative 20`,
 }
