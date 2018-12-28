@@ -97,7 +97,7 @@ func pStep2(p pos, d int) pos {
 	return pos{x, y}
 }
 
-//
+////////////////////////////////////////////////////////////////////////
 // Solution
 //
 
@@ -122,7 +122,7 @@ func (t *task) part2() int {
 	return 2
 }
 
-//
+////////////////////////////////////////////////////////////////////////
 // tests
 //
 
@@ -146,9 +146,12 @@ func test() {
 	fmt.Println("tests passed", Black(time.Since(t0)).Bold())
 }
 
+////////////////////////////////////////////////////////////////////////
+// main
+//
 func main() {
 	test()
-	// delete(ins, "github")
+	delete(ins, "github")
 	delete(ins, "google")
 	for i, in := range ins {
 		fmt.Println(Brown(fmt.Sprint("=== for ", i, " ===")))
