@@ -203,7 +203,13 @@ Quirks found so far:
 
 * Day 6 solution **checker** had a bug, that caused 20% of part1 solutions and 33% of part2 solutions to be detected as invalid ones. Bug was fixed 1 hour 42 minutes after unlock. My github-linked account had no issues, but my google-linked account was rejecting both parts. First I "cheated", by manually selecting the next largest area (3144 instead of 3358), thinking my solver had an issue detecting infinity of the area. But trying to submit solution of part2 confirmed Advent of Code has an issue, as the solution is trivial and does not depend on edge detection. So I added `_print()` function, to visualize the map and confirm my sanity for part1 solution. After the bug was discovered and fixed, Advent of Code staff removed Day 6 scores from affecting global Leaderboard.
 
+* Day 15 task is elves-vs-orcs battle, which was most difficult task this year for most people, because of custom rules how priorities needed to be resolved. I had fun solving it, and think it was the best task this year. However, while my solution works for both of my inputs, it fails for input of another user, so there's a bug, which you can find on your own. You can refer to [Issues](https://github.com/metalim/metalim.adventofcode.2018.go/issues/1) for his input.
+
 * Day 19 task part 2 requires to analyze assembly code, rewrite it in higher-level language and refactor. This has to be done manually. In that specific case code was calculating sum of all (not only prime) factors of a number. Rewritting nested loop makes program run in <100ms instead of 10 years, refactoring outer loop brings it down to <100µs.
+
+* Day 23 part 2 task has no P-time solution in general case. Some people used cheesy way to solve it using [Z3](https://rise4fun.com/Z3) - generic solver. However specific inputs provided by Advent of Code are crafted in a way, that allows us to use simple binary division search with heuristic to solve the task. Note how one of the hardest tasks can become one of the easiest.
+
+* Day 25 task has only 1 part. It was like that since first Advent of Code. However to get second star you need to solve **ALL** other tasks for the same year.
 
 ## Input
 
