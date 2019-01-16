@@ -207,7 +207,7 @@ Quirks found so far:
 
 * Day 19 task part 2 requires to analyze assembly code, rewrite it in higher-level language and refactor. This has to be done manually. In that specific case code was calculating sum of all (not only prime) factors of a number. Rewritting nested loop makes program run in <100ms instead of 10 years, refactoring outer loop brings it down to <100µs.
 
-* Day 23 part 2 task has no P-time solution in general case. Some people used cheesy way to solve it using [Z3](https://rise4fun.com/Z3) - generic solver. However specific inputs provided by Advent of Code are crafted in a way, that allows us to use simple binary division search with heuristic to solve the task. Note how one of the hardest tasks can become one of the easiest.
+* Day 23 part 2 task has no P-time solution in general case (or it's too complicated to write it in competition time constraints). Some people used cheesy way to solve it using [Z3](https://rise4fun.com/Z3) - generic solver. However specific inputs provided by Advent of Code are crafted in a way (>50% of drones forming a large blob), that allows us to use simple binary division search with heuristic to solve the task. Note how one of the hardest tasks can become one of the easiest.
 
 * Day 25 task has only 1 part. It was like that since first Advent of Code. However to get second star you need to solve **ALL** other tasks for the same year.
 
